@@ -8,10 +8,6 @@ const thoughtController = {
                 path: "reactions",
                 select: "-__v",
             })
-            .populate({
-                path: "thoughts",
-                select: "-__v",
-            })
             .select("-__v")
             .then((data) => res.json(data))
             .catch((err) => {
@@ -22,6 +18,10 @@ const thoughtController = {
     // get one thought by it's id
     getThoughtById({ params }, res) {
         Thought.findOne({ _id: params.id })
+            .populate({
+                path: "reactions",
+                select: "-__v",
+            })
             .then((data) => {
                 if (!data) {
                     res.status(404).json({ message: "No thought with this ID" });
@@ -82,9 +82,9 @@ const thoughtController = {
         Thought.findOneAndUpdate(
             { _id: params.thoughtId },
             { $addToSet: { reactions: body } },
-            { new: true }
-        )
+            { new: true })
             .then((data) => {
+                console.log(data);
                 if (!data) {
                     res.status(404).json({ message: "No thought with this id" });
                     return;
@@ -96,12 +96,16 @@ const thoughtController = {
 
     //delete Reaction
     deleteReaction({ params }, res) {
-        Thought.findOneAndUpdate(
+        console.log(params);
+        Thought.findOneAndDelete(
             { _id: params.thoughtId },
-            { $pull: { reactions: { reactionId: params.reactionId } } },
-            { new: true }
-        )
-            .then((data) => res.json(data))
+            )
+            .then(data => {
+                if (!data) {
+                    return res.status(404).json({ message: 'No reaction with this id!' });
+                  };
+                res.json(data);
+            })
             .catch((err) => res.json(err));
     },
 };
